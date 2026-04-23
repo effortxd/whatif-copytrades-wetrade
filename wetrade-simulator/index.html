@@ -1,6 +1,84 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- WeTrade GA4 Universal Tracking - G-F928CP2GH9 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-F928CP2GH9"></script>
+<script>
+  window.dataLayer=window.dataLayer||[];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js',new Date());
+  gtag('config','G-F928CP2GH9',{send_page_view:true});
+</script>
+
+<!--
+  UNIVERSAL CTA TRACKING - auto-detects CTAs on any landing page
+  Detects via: data-track attribute, class patterns, href patterns, button text (EN/ES/ID/TH)
+  Debug: open console, run wetradeTracking.list()
+-->
+<script>
+(function(){
+  "use strict";
+  var EVENTS=[
+    {name:"click_copy_trade",attr:"copy-trade",
+      classMatch:/(copy[-_]?trade|copy[-_]?now|follow[-_]?trader|nav[-_]?cta|btn[-_]?copy|btn[-_]?follow|copy[-_]?btn)/i,
+      hrefMatch:/(copy[-_]?trade|copy[-_]?now|\/copy|portal\.wetrade\.com\/campaign)/i,
+      textMatch:/(copy\s*trade|copy\s*now|1[-\s]?click\s*copy|follow\s*trader|\bcopy\b)/i},
+    {name:"click_join",attr:"join",
+      classMatch:/(btn[-_]?main|btn[-_]?outline|btn[-_]?sec|btn[-_]?join|btn[-_]?register|btn[-_]?signup|join[-_]?btn|register[-_]?btn|signup[-_]?btn|cta[-_]?main|cta[-_]?register)/i,
+      hrefMatch:/(\/register|\/signup|\/sign[-_]?up|\/join|register\?|signup\?)/i,
+      textMatch:/(join\s*now|sign\s*up|register(?:\s*now)?|\b(unete|rejoin|daftar|เข้าร่วม)\b)/i},
+    {name:"click_login",attr:"login",
+      classMatch:/(btn[-_]?login|login[-_]?btn|sign[-_]?in[-_]?btn|btn[-_]?signin)/i,
+      hrefMatch:/(\/login|\/signin|\/sign[-_]?in)/i,
+      textMatch:/(^log\s*in$|^sign\s*in$|^login$|iniciar\s*sesion|masuk|เข้าสู่ระบบ)/i},
+    {name:"click_redirect_platform",attr:"platform",
+      classMatch:/(btn[-_]?platform|platform[-_]?btn|open[-_]?platform|launch[-_]?platform)/i,
+      hrefMatch:/(\/platform|platform\.wetrade|launch|open[-_]?trade)/i,
+      textMatch:/(open\s*platform|launch\s*platform|go\s*to\s*platform|start\s*trading)/i}
+  ];
+  var UTM=(function(){try{var p=new URLSearchParams(window.location.search);return{utm_source:p.get("utm_source")||undefined,utm_medium:p.get("utm_medium")||undefined,utm_campaign:p.get("utm_campaign")||undefined,utm_content:p.get("utm_content")||undefined,utm_term:p.get("utm_term")||undefined};}catch(e){return{};}})();
+  function base(){return Object.assign({page_location:window.location.href,page_title:document.title,page_hostname:window.location.hostname},UTM);}
+  function send(n,p){if(typeof gtag!=="function")return;try{gtag("event",n,Object.assign(base(),p||{},{transport_type:"beacon"}));}catch(e){}}
+  function classify(el){
+    if(!el||el.nodeType!==1)return null;
+    var dt=el.getAttribute&&el.getAttribute("data-track");
+    if(dt){for(var i=0;i<EVENTS.length;i++)if(EVENTS[i].attr===dt)return EVENTS[i];}
+    var tag=(el.tagName||"").toUpperCase();
+    if(tag!=="A"&&tag!=="BUTTON")return null;
+    var cls=(typeof el.className==="string"?el.className:"")||"";
+    var href=el.getAttribute&&el.getAttribute("href")||"";
+    var text=(el.innerText||el.textContent||"").trim().toLowerCase();
+    for(var j=0;j<EVENTS.length;j++){
+      var d=EVENTS[j];
+      if(d.classMatch&&cls&&d.classMatch.test(cls))return d;
+      if(d.hrefMatch&&href&&d.hrefMatch.test(href))return d;
+      if(d.textMatch&&text&&text.length<60&&d.textMatch.test(text))return d;
+    }
+    return null;
+  }
+  function info(el){return{element_text:(el.innerText||el.textContent||"").trim().slice(0,100)||undefined,element_id:el.id||undefined,element_classes:(typeof el.className==="string"?el.className.slice(0,80):undefined),element_href:el.href||undefined};}
+  function bind(el){
+    if(!el||el._wtBound)return;
+    el._wtBound=true;
+    var d=classify(el);
+    if(!d)return;
+    el._wtEvent=d.name;
+    el.addEventListener("mousedown",function(e){if(e.button!==0)return;try{send(d.name,info(el));}catch(x){}},{capture:true,passive:true});
+    el.addEventListener("touchstart",function(){try{send(d.name,info(el));}catch(x){}},{capture:true,passive:true});
+  }
+  function scan(){var n=document.querySelectorAll("a, button, [data-track]");for(var i=0;i<n.length;i++)bind(n[i]);}
+  var SCROLLS=[25,50,75,100],fired={};
+  function pct(){var e=document.documentElement,m=e.scrollHeight-e.clientHeight;return m<=0?100:Math.min(100,Math.round(window.scrollY/m*100));}
+  function onScroll(){var p=pct();for(var i=0;i<SCROLLS.length;i++){var m=SCROLLS[i];if(p>=m&&!fired[m]){fired[m]=true;send("scroll_"+m,{scroll_depth:m});}}}
+  window.addEventListener("scroll",onScroll,{passive:true});
+  if(window.MutationObserver){var t;new MutationObserver(function(ms){for(var i=0;i<ms.length;i++)if(ms[i].addedNodes&&ms[i].addedNodes.length){clearTimeout(t);t=setTimeout(scan,100);return;}}).observe(document.body||document.documentElement,{childList:true,subtree:true});}
+  var _ps=history.pushState;history.pushState=function(){_ps.apply(history,arguments);setTimeout(function(){send("page_view",{page_path:window.location.pathname});scan();},0);};
+  window.addEventListener("popstate",function(){send("page_view",{page_path:window.location.pathname});scan();});
+  function init(){scan();onScroll();}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+  window.wetradeTracking={scan:scan,list:function(){var n=document.querySelectorAll("a, button, [data-track]"),r=[];for(var i=0;i<n.length;i++)if(n[i]._wtEvent)r.push({event:n[i]._wtEvent,text:(n[i].innerText||"").trim().slice(0,40),tag:n[i].tagName});console.table(r);return r.length+" CTAs bound";}};
+})();
+</script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
