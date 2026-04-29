@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-  <!-- WeTrade GA4 Universal Tracking - G-F928CP2GH9 -->
+<!-- WeTrade GA4 Universal Tracking - G-F928CP2GH9 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-F928CP2GH9"></script>
 <script>
   window.dataLayer=window.dataLayer||[];
@@ -15,45 +15,22 @@
 <script src="https://heatmap.wetrademarketing.com/tracker/tracker.js" async></script>
 
 <!--
-  UNIVERSAL CTA TRACKING v4 - works on ANY landing page
-  Uses event delegation (one global listener) so dynamic content is auto-tracked.
-  Detects clickable elements via: data-track attr, class patterns, href patterns,
-  button text (EN/ES/ID/TH/PT), AND visual heuristics (cursor:pointer, role=button).
-  Sends events to GA4
-  Debug: open console, run wetradeTracking.list()
+  WETRADE TRACKING SNIPPET v5.1 (built 2026-04-29)
+  Fires a single "click_cta" event for any meaningful button/link click.
+  Use element_text and element_classes in GA4 to distinguish which button was clicked.
+  Sends to GA4
+  Debug: open console, run wetradeTracking.list() or check wetradeTracking.version
 -->
 <script>
 (function(){
   "use strict";
-  // Detection rules — checked in priority order. First match wins.
-  var EVENTS=[
-    {name:"click_copy_trade",attr:"copy-trade",fbEvent:"Lead",
-      classMatch:/(copy[-_]?trade|copy[-_]?now|follow[-_]?trader|btn[-_]?copy|btn[-_]?follow|copy[-_]?btn|nav[-_]?cta)/i,
-      hrefMatch:/(copy[-_]?trade|copy[-_]?now|\/copy(?!right)|portal\.wetrade\.com\/campaign)/i,
-      textMatch:/(copy\s*trade|copy\s*now|1[-\s]?click\s*copy|follow\s*trader|^\s*copy\s*$|salinkan|copiar|tiru\s*trader)/i},
-    {name:"click_join",attr:"join",fbEvent:"CompleteRegistration",
-      classMatch:/(btn[-_]?(?:main|outline|sec|join|register|signup|primary|cta|hero|signup|action|apply|claim|get|start))|(?:join|register|signup|cta|apply|claim|hero)[-_]?(?:btn|button|cta|main)/i,
-      hrefMatch:/(\/register|\/signup|\/sign[-_]?up|\/join|\/apply|\/get[-_]?started|register\?|signup\?|portal\.wetrade\.com(?!\/login))/i,
-      textMatch:/(join\s*now|sign\s*up|register(?:\s*now)?|get\s*started|apply\s*now|start\s*now|claim(?:\s*(?:now|bonus|reward))?|get\s*bonus|trade\s*now|try\s*(?:now|free|it)|start\s*trading|open\s*account|create\s*account|free\s*trial|secure\s*your|get\s*your|\b(unete|abrir|crear|empezar|comenzar|registr|registrarse|reclamar|aplicar|asegura|comecar|registrar|cadastrar|inscrever|junte\s*se|daftar|mendaftar|gabung|mulai|coba|reservar|klaim|ambil|เข้าร่วม|สมัคร|ลงทะเบียน|รับ)\b)/i},
-    {name:"click_login",attr:"login",fbEvent:"Contact",
-      classMatch:/(btn[-_]?(?:login|signin|sign[-_]?in)|login[-_]?(?:btn|button)|signin[-_]?(?:btn|button))/i,
-      hrefMatch:/(\/login|\/signin|\/sign[-_]?in|portal\.wetrade\.com\/login)/i,
-      textMatch:/(^\s*log\s*in\s*$|^\s*sign\s*in\s*$|^\s*login\s*$|iniciar\s*sesion|entrar(?:\s*na?\s*conta)?|masuk|^\s*เข้าสู่ระบบ\s*$)/i},
-    {name:"click_redirect_platform",attr:"platform",fbEvent:"ViewContent",
-      classMatch:/(btn[-_]?platform|platform[-_]?btn|open[-_]?platform|launch[-_]?platform)/i,
-      hrefMatch:/(\/platform|platform\.wetrade|launch|open[-_]?trade)/i,
-      textMatch:/(open\s*platform|launch\s*platform|go\s*to\s*platform)/i}
-  ];
-  // Generic fallback — if element looks like a CTA but matches no rule, fire generic
-  var GENERIC={name:"click_cta",fbEvent:"Lead"};
   // UTM context
   var UTM=(function(){try{var p=new URLSearchParams(window.location.search);return{utm_source:p.get("utm_source")||undefined,utm_medium:p.get("utm_medium")||undefined,utm_campaign:p.get("utm_campaign")||undefined,utm_content:p.get("utm_content")||undefined,utm_term:p.get("utm_term")||undefined};}catch(e){return{};}})();
   function base(){return Object.assign({page_location:window.location.href,page_title:document.title,page_hostname:window.location.hostname},UTM);}
-  function send(n,p,fbEvent){
+  function send(n,p){
     if(typeof gtag==="function"){try{gtag("event",n,Object.assign(base(),p||{},{transport_type:"beacon"}));}catch(e){}}
   }
-  // Walk up the DOM tree to find the nearest "clickable" ancestor.
-  // This handles cases where a click lands on an inner span/icon inside a button.
+  // Walk up DOM to find a clickable ancestor — handles clicks on inner spans/icons
   function findClickable(el){
     var depth=0;
     while(el&&el.nodeType===1&&depth<6){
@@ -64,120 +41,98 @@
         if(el.getAttribute("role")==="button")return el;
         if(el.getAttribute("onclick"))return el;
       }
-      // Anything that has cursor:pointer in computed style is treated as clickable
       try{
         var cs=window.getComputedStyle(el);
         if(cs&&cs.cursor==="pointer"){
-          var cls=(typeof el.className==="string"?el.className:"")||"";
-          // Skip generic containers — only treat as clickable if class hints at button
-          if(/btn|button|cta|action|link|nav|tab|menu/i.test(cls)) return el;
+          var c=(typeof el.className==="string"?el.className:"")||"";
+          if(/btn|button|cta|action/i.test(c))return el;
         }
       }catch(e){}
       el=el.parentElement; depth++;
     }
     return null;
   }
-  // Heuristic — looks like a CTA? (visual + label cues)
-  function looksLikeCTA(el,text,cls,href){
-    if(!text||text.length>80)return false;
-    // Must have an actionable verb in any language
-    if(/\b(go|start|try|get|claim|join|sign|register|apply|open|trade|copy|invest|reserve|book|begin|continue|next|submit|send|subscribe|enroll|learn|discover|access|unlock|enter|view|see|watch|read|download|install|share|share|share|order|buy|shop)\b/i.test(text)){
-        return true;
-    }
-    // External link to a trading-related domain (signal of CTA intent)
-    if(href&&/portal\.wetrade|wetrade\.com|register|signup|login/i.test(href))return true;
-    // Class hints we havent matched specifically yet
-    if(cls&&/btn|button|cta|action|primary|hero[-_]?action/i.test(cls))return true;
-    return false;
-  }
-  function classify(el){
-    if(!el||el.nodeType!==1)return null;
-    // 1. Explicit data-track attribute (highest priority)
-    var dt=el.getAttribute&&el.getAttribute("data-track");
-    if(dt){for(var i=0;i<EVENTS.length;i++)if(EVENTS[i].attr===dt)return EVENTS[i];}
+  // Should we track this element? Skip nav/lang/UI noise.
+  function shouldTrack(el){
+    if(!el)return false;
     var cls=(typeof el.className==="string"?el.className:"")||"";
+    var text=(el.innerText||el.textContent||"").trim();
+    // Exclude UI noise by class
+    if(/lang[-_]|language|locale|tab[-_]|menu[-_]|nav[-_]|toggle|switch|close|dismiss|accordion|dropdown|carousel|slider|pagin|chevron|arrow|hamburger|burger|sidebar/i.test(cls))return false;
+    // Exclude empty / single-char buttons
+    if(text.length<=1)return false;
+    // Exclude language codes (EN, ID, TH, ES, etc.)
+    if(/^(en|id|th|es|pt|fr|de|ru|ja|ko|zh|ar|hi|vi|ms|in|my)$/i.test(text))return false;
+    // Exclude pure numbers / generic UI words
+    if(/^(\d+|next|prev|previous|back|close|menu|more|less|show|hide|expand|collapse|skip|cancel)$/i.test(text))return false;
+    // Exclude social media icon links (twitter, facebook, etc) without other text
     var href=el.getAttribute&&el.getAttribute("href")||"";
-    var text=(el.innerText||el.textContent||"").trim().toLowerCase();
-    // 2. Try each event's rules in order
-    for(var j=0;j<EVENTS.length;j++){
-      var d=EVENTS[j];
-      if(d.classMatch&&cls&&d.classMatch.test(cls))return d;
-      if(d.hrefMatch&&href&&d.hrefMatch.test(href))return d;
-      if(d.textMatch&&text&&text.length<80&&d.textMatch.test(text))return d;
-    }
-    // 3. Generic fallback for unclassified clickables that LOOK like CTAs
-    if(looksLikeCTA(el,text,cls,href))return GENERIC;
-    return null;
+    if(/(twitter|facebook|instagram|linkedin|youtube|tiktok|telegram|whatsapp)\.com/i.test(href)&&text.length<3)return false;
+    return true;
   }
-  function info(el,def){
-    var text=(el.innerText||el.textContent||"").trim().slice(0,100)||undefined;
+  function info(el){
     return{
-      element_text:text,
+      element_text:(el.innerText||el.textContent||"").trim().slice(0,100)||undefined,
       element_id:el.id||undefined,
       element_classes:(typeof el.className==="string"?el.className.slice(0,80):undefined),
       element_href:el.href||undefined,
       element_tag:(el.tagName||"").toLowerCase()
     };
   }
-  // EVENT DELEGATION — single global listener catches every click.
-  // No per-element binding needed; works on dynamic content automatically.
+  // EVENT DELEGATION — single global listener, works on dynamic content automatically
   var lastFired={el:null,t:0};
   function handleInteraction(e){
     if(e.button!==undefined&&e.button!==0)return;
     var target=findClickable(e.target);
     if(!target)return;
-    // Dedupe — a single user action can fire mousedown+touchstart+click
+    if(!shouldTrack(target))return;
+    // Dedupe: a single user action can fire mousedown+touchstart+click
     var now=Date.now();
     if(lastFired.el===target&&(now-lastFired.t)<400)return;
     lastFired={el:target,t:now};
-    var def=classify(target);
-    if(!def)return;
-    target._wtEvent=def.name;
-    try{send(def.name,info(target,def),def.fbEvent);}catch(err){}
+    try{send("click_cta",info(target));}catch(err){}
   }
-  // Use mousedown so event fires BEFORE navigation; capture phase to win race against frameworks.
+  // mousedown fires BEFORE navigation; capture phase wins races against frameworks
   document.addEventListener("mousedown",handleInteraction,{capture:true,passive:true});
   document.addEventListener("touchstart",handleInteraction,{capture:true,passive:true});
-  // Fallback: also catch keyboard activation (Enter/Space on focused buttons)
+  // Keyboard activation (Enter/Space on focused buttons)
   document.addEventListener("keydown",function(e){
     if(e.key!=="Enter"&&e.key!==" ")return;
     var t=findClickable(e.target);
-    if(!t)return;
-    var def=classify(t);
-    if(!def)return;
-    try{send(def.name,info(t,def),def.fbEvent);}catch(err){}
+    if(!t||!shouldTrack(t))return;
+    try{send("click_cta",info(t));}catch(err){}
   },{capture:true,passive:true});
   // SCROLL DEPTH
   var SCROLLS=[25,50,75,100],fired={};
   function pct(){var e=document.documentElement,m=e.scrollHeight-e.clientHeight;return m<=0?100:Math.min(100,Math.round(window.scrollY/m*100));}
   function onScroll(){var p=pct();for(var i=0;i<SCROLLS.length;i++){var m=SCROLLS[i];if(p>=m&&!fired[m]){fired[m]=true;send("scroll_"+m,{scroll_depth:m});}}}
   window.addEventListener("scroll",onScroll,{passive:true});
-  // SPA pushState/popstate support
+  // SPA support
   var _ps=history.pushState;history.pushState=function(){_ps.apply(history,arguments);setTimeout(function(){send("page_view",{page_path:window.location.pathname});},0);};
   window.addEventListener("popstate",function(){send("page_view",{page_path:window.location.pathname});});
   function init(){onScroll();}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-  // DEBUG API — wetradeTracking.list() shows what would be classified on this page
+  // Console banner so you can see the version when the page loads
+  try{console.log("%c[WeTrade Tracking v5.1]%c loaded · run wetradeTracking.list() to inspect","background:#00c896;color:#001a12;padding:2px 7px;border-radius:3px;font-weight:bold","color:#888");}catch(e){}
+  // Debug API
   window.wetradeTracking={
+    version:"5.1",
     list:function(){
-      var nodes=document.querySelectorAll("a, button, [data-track], [role=button], [onclick]");
+      var nodes=document.querySelectorAll("a, button, [role=button], [onclick], [data-track]");
       var rows=[];
       for(var i=0;i<nodes.length;i++){
-        var d=classify(nodes[i]);
-        if(d){
+        if(shouldTrack(nodes[i])){
           rows.push({
-            event:d.name,
             tag:nodes[i].tagName,
-            text:(nodes[i].innerText||"").trim().slice(0,40),
-            class:typeof nodes[i].className==="string"?nodes[i].className.slice(0,40):""
+            text:(nodes[i].innerText||"").trim().slice(0,50),
+            class:(typeof nodes[i].className==="string"?nodes[i].className.slice(0,40):"")
           });
         }
       }
       console.table(rows);
-      return rows.length+" CTAs detected";
+      return rows.length+" CTAs will be tracked";
     },
-    classify:classify,
-    fire:function(name,fb){send(name||"manual_test",{manual:true},fb);console.log("Fired:",name);}
+    fire:function(name){send(name||"manual_test",{manual:true});console.log("Fired:",name);}
   };
 })();
 </script>
