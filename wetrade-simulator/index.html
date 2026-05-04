@@ -1,160 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-<!-- WeTrade GA4 Universal Tracking - G-F928CP2GH9 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-F928CP2GH9"></script>
-<script>
-  window.dataLayer=window.dataLayer||[];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js',new Date());
-  gtag('config','G-F928CP2GH9',{send_page_view:true});
-</script>
-
-<!-- WeTrade Heatmap -->
-<script>window.HEATMAP_ENDPOINT = "https://heatmap.wetrademarketing.com/api/track";</script>
-<script src="https://heatmap.wetrademarketing.com/tracker/tracker.js" async></script>
-
-<!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '1284950479688939');
-fbq('track', 'PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=1284950479688939&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code -->
-
-<!--
-  WETRADE TRACKING SNIPPET v5.1 (built 2026-05-04)
-  Fires a single "click_cta" event for any meaningful button/link click.
-  Use element_text and element_classes in GA4 to distinguish which button was clicked.
-  Sends to GA4 AND Meta Pixel (as Lead event)
-  Debug: open console, run wetradeTracking.list() or check wetradeTracking.version
--->
-<script>
-(function(){
-  "use strict";
-  // UTM context
-  var UTM=(function(){try{var p=new URLSearchParams(window.location.search);return{utm_source:p.get("utm_source")||undefined,utm_medium:p.get("utm_medium")||undefined,utm_campaign:p.get("utm_campaign")||undefined,utm_content:p.get("utm_content")||undefined,utm_term:p.get("utm_term")||undefined};}catch(e){return{};}})();
-  function base(){return Object.assign({page_location:window.location.href,page_title:document.title,page_hostname:window.location.hostname},UTM);}
-  function send(n,p){
-    if(typeof gtag==="function"){try{gtag("event",n,Object.assign(base(),p||{},{transport_type:"beacon"}));}catch(e){}}
-    if(typeof fbq==="function"&&n==="click_cta"){try{fbq("track","Lead",{content_name:(p&&p.element_text)||n,page:window.location.pathname});}catch(e){}}
-  }
-  // Walk up DOM to find a clickable ancestor — handles clicks on inner spans/icons
-  function findClickable(el){
-    var depth=0;
-    while(el&&el.nodeType===1&&depth<6){
-      var tag=(el.tagName||"").toUpperCase();
-      if(tag==="A"||tag==="BUTTON")return el;
-      if(el.getAttribute){
-        if(el.getAttribute("data-track"))return el;
-        if(el.getAttribute("role")==="button")return el;
-        if(el.getAttribute("onclick"))return el;
-      }
-      try{
-        var cs=window.getComputedStyle(el);
-        if(cs&&cs.cursor==="pointer"){
-          var c=(typeof el.className==="string"?el.className:"")||"";
-          if(/btn|button|cta|action/i.test(c))return el;
-        }
-      }catch(e){}
-      el=el.parentElement; depth++;
-    }
-    return null;
-  }
-  // Should we track this element? Skip nav/lang/UI noise.
-  function shouldTrack(el){
-    if(!el)return false;
-    var cls=(typeof el.className==="string"?el.className:"")||"";
-    var text=(el.innerText||el.textContent||"").trim();
-    // Exclude UI noise by class
-    if(/lang[-_]|language|locale|tab[-_]|menu[-_]|nav[-_]|toggle|switch|close|dismiss|accordion|dropdown|carousel|slider|pagin|chevron|arrow|hamburger|burger|sidebar/i.test(cls))return false;
-    // Exclude empty / single-char buttons
-    if(text.length<=1)return false;
-    // Exclude language codes (EN, ID, TH, ES, etc.)
-    if(/^(en|id|th|es|pt|fr|de|ru|ja|ko|zh|ar|hi|vi|ms|in|my)$/i.test(text))return false;
-    // Exclude pure numbers / generic UI words
-    if(/^(\d+|next|prev|previous|back|close|menu|more|less|show|hide|expand|collapse|skip|cancel)$/i.test(text))return false;
-    // Exclude social media icon links (twitter, facebook, etc) without other text
-    var href=el.getAttribute&&el.getAttribute("href")||"";
-    if(/(twitter|facebook|instagram|linkedin|youtube|tiktok|telegram|whatsapp)\.com/i.test(href)&&text.length<3)return false;
-    return true;
-  }
-  function info(el){
-    return{
-      element_text:(el.innerText||el.textContent||"").trim().slice(0,100)||undefined,
-      element_id:el.id||undefined,
-      element_classes:(typeof el.className==="string"?el.className.slice(0,80):undefined),
-      element_href:el.href||undefined,
-      element_tag:(el.tagName||"").toLowerCase()
-    };
-  }
-  // EVENT DELEGATION — single global listener, works on dynamic content automatically
-  var lastFired={el:null,t:0};
-  function handleInteraction(e){
-    if(e.button!==undefined&&e.button!==0)return;
-    var target=findClickable(e.target);
-    if(!target)return;
-    if(!shouldTrack(target))return;
-    // Dedupe: a single user action can fire mousedown+touchstart+click
-    var now=Date.now();
-    if(lastFired.el===target&&(now-lastFired.t)<400)return;
-    lastFired={el:target,t:now};
-    try{send("click_cta",info(target));}catch(err){}
-  }
-  // mousedown fires BEFORE navigation; capture phase wins races against frameworks
-  document.addEventListener("mousedown",handleInteraction,{capture:true,passive:true});
-  document.addEventListener("touchstart",handleInteraction,{capture:true,passive:true});
-  // Keyboard activation (Enter/Space on focused buttons)
-  document.addEventListener("keydown",function(e){
-    if(e.key!=="Enter"&&e.key!==" ")return;
-    var t=findClickable(e.target);
-    if(!t||!shouldTrack(t))return;
-    try{send("click_cta",info(t));}catch(err){}
-  },{capture:true,passive:true});
-  // SCROLL DEPTH
-  var SCROLLS=[25,50,75,100],fired={};
-  function pct(){var e=document.documentElement,m=e.scrollHeight-e.clientHeight;return m<=0?100:Math.min(100,Math.round(window.scrollY/m*100));}
-  function onScroll(){var p=pct();for(var i=0;i<SCROLLS.length;i++){var m=SCROLLS[i];if(p>=m&&!fired[m]){fired[m]=true;send("scroll_"+m,{scroll_depth:m});}}}
-  window.addEventListener("scroll",onScroll,{passive:true});
-  // SPA support
-  var _ps=history.pushState;history.pushState=function(){_ps.apply(history,arguments);setTimeout(function(){send("page_view",{page_path:window.location.pathname});},0);};
-  window.addEventListener("popstate",function(){send("page_view",{page_path:window.location.pathname});});
-  function init(){onScroll();}
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-  // Console banner so you can see the version when the page loads
-  try{console.log("%c[WeTrade Tracking v5.1]%c loaded · run wetradeTracking.list() to inspect","background:#00c896;color:#001a12;padding:2px 7px;border-radius:3px;font-weight:bold","color:#888");}catch(e){}
-  // Debug API
-  window.wetradeTracking={
-    version:"5.1",
-    list:function(){
-      var nodes=document.querySelectorAll("a, button, [role=button], [onclick], [data-track]");
-      var rows=[];
-      for(var i=0;i<nodes.length;i++){
-        if(shouldTrack(nodes[i])){
-          rows.push({
-            tag:nodes[i].tagName,
-            text:(nodes[i].innerText||"").trim().slice(0,50),
-            class:(typeof nodes[i].className==="string"?nodes[i].className.slice(0,40):"")
-          });
-        }
-      }
-      console.table(rows);
-      return rows.length+" CTAs will be tracked";
-    },
-    fire:function(name){send(name||"manual_test",{manual:true});console.log("Fired:",name);}
-  };
-})();
-</script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -174,8 +20,144 @@ src="https://www.facebook.com/tr?id=1284950479688939&ev=PageView&noscript=1"
     />
     <meta property="og:image" content="/logo.png" />
     <meta property="og:type" content="website" />
+
+    <!-- WeTrade GA4 Universal Tracking - G-F928CP2GH9 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F928CP2GH9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-F928CP2GH9', {send_page_view: true});
+    </script>
+
+    <!-- WeTrade Heatmap -->
+    <script>window.HEATMAP_ENDPOINT = "https://heatmap.wetrademarketing.com/api/track";</script>
+    <script src="https://heatmap.wetrademarketing.com/tracker/tracker.js" async></script>
+
+    <!-- Meta Pixel Code -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '1284950479688939');
+      fbq('track', 'PageView');
+    </script>
+    <!-- End Meta Pixel Code -->
+
+    <!--
+      WETRADE TRACKING SNIPPET v5.1 (built 2026-05-04)
+      Fires a single "click_cta" event for any meaningful button/link click.
+    -->
+    <script>
+    (function(){
+      "use strict";
+      var UTM=(function(){try{var p=new URLSearchParams(window.location.search);return{utm_source:p.get("utm_source")||undefined,utm_medium:p.get("utm_medium")||undefined,utm_campaign:p.get("utm_campaign")||undefined,utm_content:p.get("utm_content")||undefined,utm_term:p.get("utm_term")||undefined};}catch(e){return{};}})();
+      function base(){return Object.assign({page_location:window.location.href,page_title:document.title,page_hostname:window.location.hostname},UTM);}
+      function send(n,p){
+        if(typeof gtag==="function"){try{gtag("event",n,Object.assign(base(),p||{},{transport_type:"beacon"}));}catch(e){}}
+        if(typeof fbq==="function"&&n==="click_cta"){try{fbq("track","Lead",{content_name:(p&&p.element_text)||n,page:window.location.pathname});}catch(e){}}
+      }
+      function findClickable(el){
+        var depth=0;
+        while(el&&el.nodeType===1&&depth<6){
+          var tag=(el.tagName||"").toUpperCase();
+          if(tag==="A"||tag==="BUTTON")return el;
+          if(el.getAttribute){
+            if(el.getAttribute("data-track"))return el;
+            if(el.getAttribute("role")==="button")return el;
+            if(el.getAttribute("onclick"))return el;
+          }
+          try{
+            var cs=window.getComputedStyle(el);
+            if(cs&&cs.cursor==="pointer"){
+              var c=(typeof el.className==="string"?el.className:"")||"";
+              if(/btn|button|cta|action/i.test(c))return el;
+            }
+          }catch(e){}
+          el=el.parentElement; depth++;
+        }
+        return null;
+      }
+      function shouldTrack(el){
+        if(!el)return false;
+        var cls=(typeof el.className==="string"?el.className:"")||"";
+        var text=(el.innerText||el.textContent||"").trim();
+        if(/lang[-_]|language|locale|tab[-_]|menu[-_]|nav[-_]|toggle|switch|close|dismiss|accordion|dropdown|carousel|slider|pagin|chevron|arrow|hamburger|burger|sidebar/i.test(cls))return false;
+        if(text.length<=1)return false;
+        if(/^(en|id|th|es|pt|fr|de|ru|ja|ko|zh|ar|hi|vi|ms|in|my)$/i.test(text))return false;
+        if(/^(\d+|next|prev|previous|back|close|menu|more|less|show|hide|expand|collapse|skip|cancel)$/i.test(text))return false;
+        var href=el.getAttribute&&el.getAttribute("href")||"";
+        if(/(twitter|facebook|instagram|linkedin|youtube|tiktok|telegram|whatsapp)\.com/i.test(href)&&text.length<3)return false;
+        return true;
+      }
+      function info(el){
+        return{
+          element_text:(el.innerText||el.textContent||"").trim().slice(0,100)||undefined,
+          element_id:el.id||undefined,
+          element_classes:(typeof el.className==="string"?el.className.slice(0,80):undefined),
+          element_href:el.href||undefined,
+          element_tag:(el.tagName||"").toLowerCase()
+        };
+      }
+      var lastFired={el:null,t:0};
+      function handleInteraction(e){
+        if(e.button!==undefined&&e.button!==0)return;
+        var target=findClickable(e.target);
+        if(!target)return;
+        if(!shouldTrack(target))return;
+        var now=Date.now();
+        if(lastFired.el===target&&(now-lastFired.t)<400)return;
+        lastFired={el:target,t:now};
+        try{send("click_cta",info(target));}catch(err){}
+      }
+      document.addEventListener("mousedown",handleInteraction,{capture:true,passive:true});
+      document.addEventListener("touchstart",handleInteraction,{capture:true,passive:true});
+      document.addEventListener("keydown",function(e){
+        if(e.key!=="Enter"&&e.key!==" ")return;
+        var t=findClickable(e.target);
+        if(!t||!shouldTrack(t))return;
+        try{send("click_cta",info(t));}catch(err){}
+      },{capture:true,passive:true});
+      var SCROLLS=[25,50,75,100],fired={};
+      function pct(){var e=document.documentElement,m=e.scrollHeight-e.clientHeight;return m<=0?100:Math.min(100,Math.round(window.scrollY/m*100));}
+      function onScroll(){var p=pct();for(var i=0;i<SCROLLS.length;i++){var m=SCROLLS[i];if(p>=m&&!fired[m]){fired[m]=true;send("scroll_"+m,{scroll_depth:m});}}}
+      window.addEventListener("scroll",onScroll,{passive:true});
+      var _ps=history.pushState;history.pushState=function(){_ps.apply(history,arguments);setTimeout(function(){send("page_view",{page_path:window.location.pathname});},0);};
+      window.addEventListener("popstate",function(){send("page_view",{page_path:window.location.pathname});});
+      function init(){onScroll();}
+      if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+      try{console.log("%c[WeTrade Tracking v5.1]%c loaded · run wetradeTracking.list() to inspect","background:#00c896;color:#001a12;padding:2px 7px;border-radius:3px;font-weight:bold","color:#888");}catch(e){}
+      window.wetradeTracking={
+        version:"5.1",
+        list:function(){
+          var nodes=document.querySelectorAll("a, button, [role=button], [onclick], [data-track]");
+          var rows=[];
+          for(var i=0;i<nodes.length;i++){
+            if(shouldTrack(nodes[i])){
+              rows.push({
+                tag:nodes[i].tagName,
+                text:(nodes[i].innerText||"").trim().slice(0,50),
+                class:(typeof nodes[i].className==="string"?nodes[i].className.slice(0,40):"")
+              });
+            }
+          }
+          console.table(rows);
+          return rows.length+" CTAs will be tracked";
+        },
+        fire:function(name){send(name||"manual_test",{manual:true});console.log("Fired:",name);}
+      };
+    })();
+    </script>
   </head>
   <body>
+    <!-- Meta Pixel noscript fallback — MUST live in body, not head -->
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1284950479688939&ev=PageView&noscript=1" /></noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
