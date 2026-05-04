@@ -14,11 +14,29 @@
 <script>window.HEATMAP_ENDPOINT = "https://heatmap.wetrademarketing.com/api/track";</script>
 <script src="https://heatmap.wetrademarketing.com/tracker/tracker.js" async></script>
 
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1284950479688939');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1284950479688939&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+
 <!--
-  WETRADE TRACKING SNIPPET v5.1 (built 2026-04-29)
+  WETRADE TRACKING SNIPPET v5.1 (built 2026-05-04)
   Fires a single "click_cta" event for any meaningful button/link click.
   Use element_text and element_classes in GA4 to distinguish which button was clicked.
-  Sends to GA4
+  Sends to GA4 AND Meta Pixel (as Lead event)
   Debug: open console, run wetradeTracking.list() or check wetradeTracking.version
 -->
 <script>
@@ -29,6 +47,7 @@
   function base(){return Object.assign({page_location:window.location.href,page_title:document.title,page_hostname:window.location.hostname},UTM);}
   function send(n,p){
     if(typeof gtag==="function"){try{gtag("event",n,Object.assign(base(),p||{},{transport_type:"beacon"}));}catch(e){}}
+    if(typeof fbq==="function"&&n==="click_cta"){try{fbq("track","Lead",{content_name:(p&&p.element_text)||n,page:window.location.pathname});}catch(e){}}
   }
   // Walk up DOM to find a clickable ancestor — handles clicks on inner spans/icons
   function findClickable(el){
